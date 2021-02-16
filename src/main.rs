@@ -1,6 +1,8 @@
 use orgize::Org;
 use rusqlite::{params, NO_PARAMS};
 use rusqlite::{Connection, Result};
+use std::io::prelude::*;
+use tera::Tera;
 // use serde_lexpr::{from_str, to_string};
 
 #[derive(Debug)]
@@ -109,18 +111,47 @@ fn read_files() -> Result<Vec<OrgFile>> {
     Ok(files)
 }
 
-fn parse_file(file: &OrgFile) {
+fn parse_file(file: &OrgFile) -> Result<(), std::io::Error> {
     let path = &file.path;
     let opened_file = std::fs::read_to_string(path).expect("Should read file");
     let parsed = Org::parse(&opened_file);
     let mut writer = Vec::new();
     parsed.write_html(&mut writer).unwrap();
-    // println!("{:?}", String::from_utf8(writer));
+    let parsed_str = String::from_utf8(writer).unwrap();
+
+    let template = main_page_template();
+
+    let mut context = tera::Context::new();
+    context.insert("page", &parsed_str);
+    context.insert("tags", &file.tags.join(", "));
+    let result = template.render("page.html", &context);
+    // println!("{}", result.unwrap());
+    let path = "/Users/raheel/Downloads/org-roam-export/".to_string() + &file.title + ".html";
+    let mut output = std::fs::File::create(path).unwrap();
+    let content_bytes = result.unwrap().into_bytes();
+    output.write_all(&content_bytes)?;
+
+    Ok(())
+    // output.
+    // write!(output, result.unwrap());
+    // template.render_str(, context)
 }
 
-fn main() -> Result<()> {
-    let files = read_files()?;
-    let result = read_tags(files)?;
-    println!("{} files, {} tags", result.files.len(), result.tags.len());
+fn main_page_template() -> Tera {
+    let mut tera = Tera::default();
+    tera.autoescape_on(vec![]);
+    tera.add_raw_template(
+        "page.html",
+        "<html><head> <meta charset='utf-8'/> </head><body>{{tags}}<div>{{page}}</div></body></html>",
+    )
+    .expect("should load raw templat");
+    tera
+}
+
+fn main() -> Result<(), std::io::Error> {
+    let files = read_files().unwrap();
+    let result = read_tags(files).unwrap();
+    parse_file(result.files.first().unwrap())?;
+    parse_file(&result.files[3])?;
     Ok(())
 }
