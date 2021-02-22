@@ -1,8 +1,36 @@
 use orgize::Org;
+use reader::OrgTag;
+use serde::Serialize;
 use std::io::prelude::*;
 use tera::Tera;
 
 use super::reader;
+
+fn base_path() -> String {
+    String::from("/Users/raheel/Downloads/org-roam-export/")
+}
+
+impl OrgTag {
+    fn output_file(self: &OrgTag) -> Result<std::fs::File, std::io::Error> {
+        let path = base_path() + "tag-" + &self.name + ".html";
+        let file = std::fs::File::create(path)?;
+        Ok(file)
+    }
+}
+
+pub fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
+    let tempalte = tag_page_template();
+    let mut context = tera::Context::new();
+    context.insert("tag_name", &tag.name);
+    context.insert("pages", &tag.files);
+    let render_result = tempalte.render("tag.html", &context).unwrap();
+    let content_bytes = render_result.into_bytes();
+    let mut output = tag.output_file()?;
+    output.write_all(&content_bytes)?;
+    println!("{}", &tag.name);
+
+    Ok(())
+}
 
 pub fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
     let path = &file.path;
@@ -16,10 +44,9 @@ pub fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
 
     let mut context = tera::Context::new();
     context.insert("page", &parsed_str);
-    context.insert("tags", &file.tags.join(", "));
+    context.insert("tags", &file.tags);
     let result = template.render("page.html", &context);
-    println!("{}", &file.title);
-    let path = "/Users/raheel/Downloads/org-roam-export/".to_string() + &file.title + ".html";
+    let path = base_path() + &file.title + ".html";
     let mut output = std::fs::File::create(path).unwrap();
     let content_bytes = result.unwrap().into_bytes();
     output.write_all(&content_bytes)?;
@@ -27,12 +54,47 @@ pub fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
     Ok(())
 }
 
+fn tag_page_template() -> Tera {
+    let mut tera = Tera::default();
+    tera.autoescape_on(vec![]);
+    tera.add_raw_template(
+        "tag.html",
+        "
+<html><head>
+<meta charset='utf-8'/> </head>
+<body>
+<div>
+All pages for <strong>{{tag_name}}</strong>
+
+<ul>
+{% for page in pages %}
+<li>
+  <a href='{{page.title}}.html'>{{page.title}}</a>
+</li>
+{% endfor %}
+</ul>
+</div>
+
+</body></html>
+",
+    )
+    .expect("should load raw templat");
+    tera
+}
+
 fn main_page_template() -> Tera {
     let mut tera = Tera::default();
     tera.autoescape_on(vec![]);
     tera.add_raw_template(
         "page.html",
-        "<html><head> <meta charset='utf-8'/> </head><body>{{tags}}<div>{{page}}</div></body></html>",
+        "<html><head> <meta charset='utf-8'/> </head>
+<body>
+	{% for tag in tags %}
+    <a href='tag-{{tag }}.html'>{{ tag }}</a>
+	{% endfor %}
+	<div>{{page}}</div>
+</body>
+</html>",
     )
     .expect("should load raw templat");
     tera

@@ -1,5 +1,6 @@
 use rusqlite::{params, NO_PARAMS};
 use rusqlite::{Connection, Result};
+use serde::Serialize;
 
 #[derive(Debug)]
 pub struct OrgFile {
@@ -38,15 +39,20 @@ impl OrgFile {
     }
 }
 
+#[derive(Debug, Serialize)]
+pub struct OrgTagFile {
+    pub title: String,
+}
+
 #[derive(Debug)]
 pub struct OrgTag {
     pub name: String,
-    pub file_paths: Vec<String>,
+    pub files: Vec<OrgTagFile>,
 }
 
 impl OrgTag {
-    fn add_path(self: &mut OrgTag, p: &String) {
-        self.file_paths.push(p.clone());
+    fn add_path(self: &mut OrgTag, p: OrgTagFile) {
+        self.files.push(p);
     }
 }
 
@@ -88,12 +94,15 @@ fn read_tags(mut files: Vec<OrgFile>) -> Result<Wiki> {
             .expect("Something went wrong");
         for tag_name in &result.tags {
             file.add_tag(&tag_name);
+            let tag_file = OrgTagFile {
+                title: file.title.clone(),
+            };
             if let Some(tag) = tags.iter_mut().find(|x| x.name == *tag_name) {
-                tag.add_path(&tag_name);
+                tag.add_path(tag_file);
             } else {
                 tags.push(OrgTag {
                     name: String::from(tag_name),
-                    file_paths: vec![String::from(path)],
+                    files: vec![tag_file],
                 });
             }
         }

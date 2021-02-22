@@ -539,6 +539,7 @@ version = "0.1.0"
 dependencies = [
  "orgize",
  "rusqlite",
+ "serde",
  "serde-lexpr",
  "tera",
 ]
