@@ -2,7 +2,7 @@ use rusqlite::{params, NO_PARAMS};
 use rusqlite::{Connection, Result};
 use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct OrgFile {
     pub title: String,
     pub path: String,

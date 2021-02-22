@@ -1,6 +1,5 @@
 use orgize::Org;
 use reader::OrgTag;
-use serde::Serialize;
 use std::io::prelude::*;
 use tera::Tera;
 
@@ -18,7 +17,27 @@ impl OrgTag {
     }
 }
 
-pub fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
+pub fn publish(wiki: reader::Wiki) -> Result<(), std::io::Error> {
+    wiki.files.iter().try_for_each(|file| publish_file(file))?;
+    wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
+    publish_index(&wiki)?;
+    Ok(())
+}
+
+fn publish_index(wiki: &reader::Wiki) -> Result<(), std::io::Error> {
+    let tempalte = index_template();
+    let mut context = tera::Context::new();
+    context.insert("pages", &wiki.files);
+    let render_result = tempalte.render("index.html", &context).unwrap();
+    let content_bytes = render_result.into_bytes();
+    let path = base_path() + "index.html";
+    let mut output = std::fs::File::create(path).unwrap();
+    output.write_all(&content_bytes)?;
+
+    Ok(())
+}
+
+fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
     let tempalte = tag_page_template();
     let mut context = tera::Context::new();
     context.insert("tag_name", &tag.name);
@@ -32,7 +51,7 @@ pub fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-pub fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
+fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
     let path = &file.path;
     let opened_file = std::fs::read_to_string(path).expect("Should read file");
     let parsed = Org::parse(&opened_file);
@@ -40,7 +59,7 @@ pub fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
     parsed.write_html(&mut writer).unwrap();
     let parsed_str = String::from_utf8(writer).unwrap();
 
-    let template = main_page_template();
+    let template = page_template();
 
     let mut context = tera::Context::new();
     context.insert("page", &parsed_str);
@@ -82,7 +101,28 @@ All pages for <strong>{{tag_name}}</strong>
     tera
 }
 
-fn main_page_template() -> Tera {
+fn index_template() -> Tera {
+    let mut tera = Tera::default();
+    tera.autoescape_on(vec![]);
+    tera.add_raw_template(
+        "index.html",
+        "<html><head> <meta charset='utf-8'/> </head>
+<body>
+<ul>
+{% for page in pages %}
+<li>
+  <a href='{{page.title}}.html'>{{page.title}}</a>
+</li>
+{% endfor %}
+</ul>
+</body>
+</html>",
+    )
+    .expect("should load raw templat");
+    tera
+}
+
+fn page_template() -> Tera {
     let mut tera = Tera::default();
     tera.autoescape_on(vec![]);
     tera.add_raw_template(

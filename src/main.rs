@@ -4,12 +4,6 @@ mod reader;
 
 fn main() -> Result<(), std::io::Error> {
     let wiki = reader::read_wiki().unwrap();
-    wiki.files
-        .iter()
-        .for_each(|file| publisher::publish_file(file).unwrap());
-    wiki.tags
-        .iter()
-        .for_each(|tag| publisher::publish_tag(tag).unwrap());
-
+    publisher::publish(wiki)?;
     Ok(())
 }
