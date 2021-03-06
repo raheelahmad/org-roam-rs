@@ -131,7 +131,25 @@ fn read_files() -> Result<Vec<OrgFile>> {
             Err(e) => println!("{}", e),
         }
     }
+    files.sort_by(|f1, f2| f1.elapsed().cmp(&f2.elapsed()));
+
     Ok(files)
+}
+
+trait Elapsed {
+    fn elapsed(&self) -> std::time::Duration;
+}
+
+impl Elapsed for OrgFile {
+    fn elapsed(&self) -> std::time::Duration {
+        let file = std::fs::File::open(&self.path).unwrap();
+        file.metadata()
+            .unwrap()
+            .modified()
+            .unwrap()
+            .elapsed()
+            .unwrap()
+    }
 }
 
 pub fn read_wiki() -> Result<Wiki> {

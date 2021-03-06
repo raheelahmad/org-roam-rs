@@ -46,7 +46,6 @@ fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
     let content_bytes = render_result.into_bytes();
     let mut output = tag.output_file()?;
     output.write_all(&content_bytes)?;
-    println!("{}", &tag.name);
 
     Ok(())
 }
@@ -73,15 +72,36 @@ fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
     Ok(())
 }
 
+fn header() -> String {
+    String::from(
+        "
+<html>
+<head> <meta charset='utf-8'/> </head>
+<body>
+	",
+    )
+}
+
+fn footer() -> String {
+    String::from(
+        "
+	</body></html>
+    ",
+    )
+}
+
+fn template_with_content(content: &str) -> String {
+    let mut result = header();
+    result.push_str(content);
+    result.push_str(&footer());
+    result
+}
+
 fn tag_page_template() -> Tera {
     let mut tera = Tera::default();
     tera.autoescape_on(vec![]);
-    tera.add_raw_template(
-        "tag.html",
+    let content = template_with_content(
         "
-<html><head>
-<meta charset='utf-8'/> </head>
-<body>
 <div>
 All pages for <strong>{{tag_name}}</strong>
 
@@ -96,8 +116,10 @@ All pages for <strong>{{tag_name}}</strong>
 
 </body></html>
 ",
-    )
-    .expect("should load raw templat");
+    );
+
+    tera.add_raw_template("tag.html", &content)
+        .expect("should load raw templat");
     tera
 }
 
@@ -106,8 +128,8 @@ fn index_template() -> Tera {
     tera.autoescape_on(vec![]);
     tera.add_raw_template(
         "index.html",
-        "<html><head> <meta charset='utf-8'/> </head>
-<body>
+        &template_with_content(
+            "
 <ul>
 {% for page in pages %}
 <li>
@@ -115,8 +137,8 @@ fn index_template() -> Tera {
 </li>
 {% endfor %}
 </ul>
-</body>
-</html>",
+",
+        ),
     )
     .expect("should load raw templat");
     tera
@@ -127,14 +149,14 @@ fn page_template() -> Tera {
     tera.autoescape_on(vec![]);
     tera.add_raw_template(
         "page.html",
-        "<html><head> <meta charset='utf-8'/> </head>
-<body>
+        &template_with_content(
+            "
 	{% for tag in tags %}
     <a href='tag-{{tag }}.html'>{{ tag }}</a>
 	{% endfor %}
 	<div>{{page}}</div>
-</body>
-</html>",
+",
+        ),
     )
     .expect("should load raw templat");
     tera
