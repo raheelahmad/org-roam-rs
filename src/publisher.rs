@@ -1,6 +1,4 @@
-use fs_extra::dir::*;
 use orgize::{export::HtmlHandler, Org};
-use percent_encoding;
 use reader::OrgTag;
 use std::io::prelude::*;
 use tera::Tera;
@@ -19,7 +17,7 @@ impl OrgTag {
     }
 }
 
-pub fn publish(wiki: reader::Wiki) -> Result<(), std::io::Error> {
+pub fn publish(wiki: reader::Wiki) -> Result<(), ExportError> {
     wiki.files.iter().try_for_each(|file| publish_file(file))?;
     wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
     copy_images_deux().expect("Should copy successfully");
@@ -63,12 +61,20 @@ fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
 }
 
 #[derive(Debug)]
-enum ExportError {
-    Random,
+pub enum ExportError {
+    Random(String),
+}
+
+impl std::fmt::Display for ExportError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExportError::Random(reason) => write!(f, "{}", (reason)),
+        }
+    }
 }
 impl From<std::io::Error> for ExportError {
     fn from(error: std::io::Error) -> Self {
-        ExportError::Random
+        ExportError::Random(error.to_string())
     }
 }
 
@@ -81,10 +87,12 @@ impl HtmlHandler<ExportError> for CustomHTMLHandler {
             if link.path.ends_with("png") {
                 let path = &link.path;
                 // let filename = path.split('/').last().unwrap().replace(' ', "%20");
-                let filename = path.strip_prefix("file:images/").unwrap_or("...");
+                let filename = path
+                    .strip_prefix("file:images/")
+                    .or_else(|| path.strip_prefix("file:/images/"))
+                    .unwrap();
                 // .unwrap_or(path.strip_prefix("file:/images/").unwrap());
 
-                println!("{} → {}", path, filename);
                 write!(w, "<img src='/images/{}'/>", filename).unwrap();
             } else {
                 self.0.start(w, element)?;
@@ -101,7 +109,7 @@ impl HtmlHandler<ExportError> for CustomHTMLHandler {
     }
 }
 
-fn publish_file(file: &reader::OrgFile) -> Result<(), std::io::Error> {
+fn publish_file(file: &reader::OrgFile) -> Result<(), ExportError> {
     let path = &file.path;
     let opened_file = std::fs::read_to_string(path).expect("Should read file");
     let parsed = Org::parse(&opened_file);
