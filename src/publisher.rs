@@ -1,9 +1,12 @@
-use orgize::{export::HtmlHandler, Org};
+use errors::ExportError;
+use orgize::Org;
 use reader::OrgTag;
 use std::io::prelude::*;
-use tera::Tera;
 
+use super::errors;
+use super::handler;
 use super::reader;
+use super::templates;
 
 fn base_path() -> String {
     String::from("/Users/raheel/Downloads/org-roam-export/")
@@ -20,18 +23,13 @@ impl OrgTag {
 pub fn publish(wiki: reader::Wiki) -> Result<(), ExportError> {
     wiki.files.iter().try_for_each(|file| publish_file(file))?;
     wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
-    let has_index_file = wiki.files.iter().any(|f| f.title.to_lowercase() == "index");
-    if !has_index_file {
-        publish_index(&wiki)?;
-    } else {
-        println!("Have a title. No need to publish custom one");
-    }
+    publish_all_pages(&wiki)?;
 
-    copy_images_deux().expect("Should copy successfully");
+    copy_images()?;
     Ok(())
 }
 
-fn copy_images_deux() -> Result<(), fs_extra::error::Error> {
+fn copy_images() -> Result<(), fs_extra::error::Error> {
     let from = std::path::Path::new("/Users/raheel/orgs/roam/images");
     let to = std::path::Path::new("/Users/raheel/Downloads/org-roam-export");
     let mut options = fs_extra::dir::CopyOptions::new();
@@ -40,13 +38,13 @@ fn copy_images_deux() -> Result<(), fs_extra::error::Error> {
     Ok(())
 }
 
-fn publish_index(wiki: &reader::Wiki) -> Result<(), std::io::Error> {
-    let template = index_template();
+fn publish_all_pages(wiki: &reader::Wiki) -> Result<(), std::io::Error> {
+    let template = templates::all_pages_template();
     let mut context = tera::Context::new();
     context.insert("pages", &wiki.files);
-    let render_result = template.render("index.html", &context).unwrap();
+    let render_result = template.render("all_pages.html", &context).unwrap();
     let content_bytes = render_result.into_bytes();
-    let path = base_path() + "index.html";
+    let path = base_path() + "all_pages.html";
     let mut output = std::fs::File::create(path).unwrap();
     output.write_all(&content_bytes)?;
 
@@ -54,7 +52,7 @@ fn publish_index(wiki: &reader::Wiki) -> Result<(), std::io::Error> {
 }
 
 fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
-    let tempalte = tag_page_template();
+    let tempalte = templates::tag_page_template();
     let mut context = tera::Context::new();
     context.insert("tag_name", &tag.name);
     context.insert("pages", &tag.files);
@@ -66,67 +64,17 @@ fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-#[derive(Debug)]
-pub enum ExportError {
-    Random(String),
-}
-
-impl std::fmt::Display for ExportError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ExportError::Random(reason) => write!(f, "{}", (reason)),
-        }
-    }
-}
-impl From<std::io::Error> for ExportError {
-    fn from(error: std::io::Error) -> Self {
-        ExportError::Random(error.to_string())
-    }
-}
-
-#[derive(Default)]
-struct CustomHTMLHandler(orgize::export::DefaultHtmlHandler);
-
-impl HtmlHandler<ExportError> for CustomHTMLHandler {
-    fn start<W: Write>(&mut self, mut w: W, element: &orgize::Element) -> Result<(), ExportError> {
-        if let orgize::Element::Link(link) = element {
-            if link.path.ends_with("png") {
-                let path = &link.path;
-                // let filename = path.split('/').last().unwrap().replace(' ', "%20");
-                let filename = path
-                    .strip_prefix("file:images/")
-                    .or_else(|| path.strip_prefix("file:/images/"))
-                    .unwrap();
-                // .unwrap_or(path.strip_prefix("file:/images/").unwrap());
-
-                write!(w, "<img src='/images/{}'/>", filename).unwrap();
-            } else {
-                self.0.start(w, element)?;
-            }
-        } else {
-            self.0.start(w, element)?;
-        }
-        Ok(())
-    }
-
-    fn end<W: Write>(&mut self, w: W, element: &orgize::Element) -> Result<(), ExportError> {
-        self.0.end(w, element)?;
-        Ok(())
-    }
-}
-
 fn publish_file(file: &reader::OrgFile) -> Result<(), ExportError> {
     let path = &file.path;
     let opened_file = std::fs::read_to_string(path).expect("Should read file");
     let parsed = Org::parse(&opened_file);
     let mut writer = Vec::new();
 
-    // parsed.write_html(&mut writer).unwrap();
-    let mut handler = CustomHTMLHandler::default();
+    let mut handler = handler::CustomHTMLHandler::default();
     parsed.write_html_custom(&mut writer, &mut handler).unwrap();
     let parsed_str = String::from_utf8(writer).unwrap();
 
-    let template = page_template();
+    let template = templates::page_template();
 
     let mut context = tera::Context::new();
     context.insert("page", &parsed_str);
@@ -138,94 +86,4 @@ fn publish_file(file: &reader::OrgFile) -> Result<(), ExportError> {
     output.write_all(&content_bytes)?;
 
     Ok(())
-}
-
-fn header() -> String {
-    String::from(
-        "
-<html>
-<head> <meta charset='utf-8'/> </head>
-<body>
-	",
-    )
-}
-
-fn footer() -> String {
-    String::from(
-        "
-	</body></html>
-    ",
-    )
-}
-
-fn template_with_content(content: &str) -> String {
-    let mut result = header();
-    result.push_str(content);
-    result.push_str(&footer());
-    result
-}
-
-fn tag_page_template() -> Tera {
-    let mut tera = Tera::default();
-    tera.autoescape_on(vec![]);
-    let content = template_with_content(
-        "
-<div>
-All pages for <strong>{{tag_name}}</strong>
-
-<ul>
-{% for page in pages %}
-<li>
-  <a href='{{page.title}}.html'>{{page.title}}</a>
-</li>
-{% endfor %}
-</ul>
-</div>
-
-</body></html>
-",
-    );
-
-    tera.add_raw_template("tag.html", &content)
-        .expect("should load raw templat");
-    tera
-}
-
-fn index_template() -> Tera {
-    let mut tera = Tera::default();
-    tera.autoescape_on(vec![]);
-    tera.add_raw_template(
-        "index.html",
-        &template_with_content(
-            "
-<ul>
-{% for page in pages %}
-<li>
-  <a href='{{page.title}}.html'>{{page.title}}</a>
-</li>
-{% endfor %}
-</ul>
-",
-        ),
-    )
-    .expect("should load raw templat");
-    tera
-}
-
-fn page_template() -> Tera {
-    let mut tera = Tera::default();
-    tera.autoescape_on(vec![]);
-    tera.add_raw_template(
-        "page.html",
-        &template_with_content(
-            "
-	{% for tag in tags %}
-    <a href='tag-{{tag }}.html'>{{ tag }}</a>
-	{% endfor %}
-	<div>{{page}}</div>
-",
-        ),
-    )
-    .expect("should load raw templat");
-    tera
 }

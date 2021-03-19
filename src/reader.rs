@@ -131,7 +131,7 @@ fn read_files() -> Result<Vec<OrgFile>> {
             Err(e) => println!("{}", e),
         }
     }
-    files.sort_by(|f1, f2| f1.elapsed().cmp(&f2.elapsed()));
+    files.sort_by_key(|f| f.elapsed());
 
     Ok(files)
 }
