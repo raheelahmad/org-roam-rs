@@ -20,7 +20,13 @@ impl OrgTag {
 pub fn publish(wiki: reader::Wiki) -> Result<(), std::io::Error> {
     wiki.files.iter().try_for_each(|file| publish_file(file))?;
     wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
-    publish_index(&wiki)?;
+    let has_index_file = wiki.files.iter().any(|f| f.title.to_lowercase() == "index");
+    if !has_index_file {
+        publish_index(&wiki)?;
+    } else {
+        println!("Have a title. No need to publish custom one");
+    }
+
     Ok(())
 }
 
