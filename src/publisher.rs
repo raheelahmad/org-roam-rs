@@ -21,9 +21,11 @@ impl OrgTag {
 }
 
 pub fn publish(wiki: reader::Wiki) -> Result<(), ExportError> {
-    wiki.files.iter().try_for_each(|file| publish_file(file))?;
     wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
     publish_all_pages(&wiki)?;
+    wiki.files
+        .iter()
+        .try_for_each(|file| publish_file(file, &wiki))?;
 
     copy_images()?;
     Ok(())
@@ -64,13 +66,14 @@ fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn publish_file(file: &reader::OrgFile) -> Result<(), ExportError> {
+fn publish_file(file: &reader::OrgFile, wiki: &reader::Wiki) -> Result<(), ExportError> {
     let path = &file.path;
     let opened_file = std::fs::read_to_string(path).expect("Should read file");
     let parsed = Org::parse(&opened_file);
     let mut writer = Vec::new();
 
-    let mut handler = handler::CustomHTMLHandler::default();
+    let files = wiki.files.clone();
+    let mut handler = handler::CustomHTMLHandler::new(files);
     parsed.write_html_custom(&mut writer, &mut handler).unwrap();
     let parsed_str = String::from_utf8(writer).unwrap();
 

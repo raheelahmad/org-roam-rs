@@ -2,7 +2,7 @@ use rusqlite::{params, NO_PARAMS};
 use rusqlite::{Connection, Result};
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct OrgFile {
     pub title: String,
     pub path: String,
@@ -56,6 +56,7 @@ impl OrgTag {
     }
 }
 
+#[derive(Default)]
 pub struct Wiki {
     pub files: Vec<OrgFile>,
     pub tags: Vec<OrgTag>,
