@@ -3,29 +3,29 @@ use super::reader;
 use orgize::export::HtmlHandler;
 use std::io::prelude::*;
 
-pub struct CustomHTMLHandler {
+pub struct CustomHtmlHandler {
     base: orgize::export::DefaultHtmlHandler,
     files: Vec<reader::OrgFile>,
 }
 
-impl Default for CustomHTMLHandler {
+impl Default for CustomHtmlHandler {
     fn default() -> Self {
-        CustomHTMLHandler {
+        CustomHtmlHandler {
             base: orgize::export::DefaultHtmlHandler::default(),
             files: Vec::new(),
         }
     }
 }
-impl CustomHTMLHandler {
-    pub fn new<'a>(files: Vec<reader::OrgFile>) -> CustomHTMLHandler {
-        CustomHTMLHandler {
+impl CustomHtmlHandler {
+    pub fn new(files: Vec<reader::OrgFile>) -> CustomHtmlHandler {
+        CustomHtmlHandler {
             base: orgize::export::DefaultHtmlHandler::default(),
             files,
         }
     }
 }
 
-impl HtmlHandler<errors::ExportError> for CustomHTMLHandler {
+impl HtmlHandler<errors::ExportError> for CustomHtmlHandler {
     fn start<W: Write>(
         &mut self,
         mut w: W,
@@ -40,16 +40,20 @@ impl HtmlHandler<errors::ExportError> for CustomHTMLHandler {
                     .unwrap();
 
                 write!(w, "<img src='/images/{}'/>", filename).unwrap();
-            } else if link.path.ends_with("org") {
-                // self.files.iter().filter(|f| f.title)
-                // if let file = self.files.iter
-
-                let matching_file = self.files.iter().filter(|f| f.path == link.path).last();
+            } else if link.path.ends_with("org") && !link.path.starts_with("http") {
+                // Need to switch out an org fle link with the published file URL
+                let link_path = link.path.strip_prefix("file:").unwrap();
+                let matching_file = self
+                    .files
+                    .iter()
+                    .filter(|f| {
+                        let file_path_comp = f.path.split('/').last().unwrap();
+                        file_path_comp == link_path
+                    })
+                    .last();
                 if let Some(a_match) = matching_file {
-                    println!("✓ {}", link.path);
-                    write!(w, "<a href='{}'/>", a_match.title).unwrap();
+                    write!(w, "<a href='{}'>{}</a>", a_match.title, a_match.title).unwrap();
                 } else {
-                    println!("none for {}", link.path);
                     self.base.start(w, element)?;
                 }
             } else {

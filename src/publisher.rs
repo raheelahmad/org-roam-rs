@@ -73,7 +73,7 @@ fn publish_file(file: &reader::OrgFile, wiki: &reader::Wiki) -> Result<(), Expor
     let mut writer = Vec::new();
 
     let files = wiki.files.clone();
-    let mut handler = handler::CustomHTMLHandler::new(files);
+    let mut handler = handler::CustomHtmlHandler::new(files);
     parsed.write_html_custom(&mut writer, &mut handler).unwrap();
     let parsed_str = String::from_utf8(writer).unwrap();
 
