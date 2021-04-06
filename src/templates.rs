@@ -9,7 +9,12 @@ pub fn header() -> String {
 {{title}}
  </title>
  <meta charset='utf-8'/> </head>
+<link href=\"css/tufte.css\" rel=\"stylesheet\" type=\"text/css\"/>
 <body>
+<h3>
+<a href='/all_pages.html'> All Pages </a>
+</h3>
+</small>
 	",
     )
 }
@@ -35,7 +40,9 @@ pub fn tag_page_template() -> Tera {
     let content = template_with_content(
         "
 <div>
+<h1>
 All pages for <strong>{{tag_name}}</strong>
+</h1>
 
 <ul>
 {% for page in pages %}
@@ -62,6 +69,7 @@ pub fn all_pages_template() -> Tera {
         "all_pages.html",
         &template_with_content(
             "
+<h1>All Pages</h1>
 <ul>
 {% for page in pages %}
 <li>
@@ -83,9 +91,12 @@ pub fn page_template() -> Tera {
         "page.html",
         &template_with_content(
             "
+<h1><strong>{{title}}</strong></h1>
+<h3>
 	{% for tag in tags %}
     <a href='tag-{{tag }}.html'>{{ tag }}</a>
 	{% endfor %}
+</h3>
 	<div>{{page}}</div>
 ",
         ),

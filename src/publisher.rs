@@ -28,11 +28,21 @@ pub fn publish(wiki: reader::Wiki) -> Result<(), ExportError> {
         .try_for_each(|file| publish_file(file, &wiki))?;
 
     copy_images()?;
+    copy_assets()?;
     Ok(())
 }
 
 fn copy_images() -> Result<(), fs_extra::error::Error> {
     let from = std::path::Path::new("/Users/raheel/orgs/roam/images");
+    let to = std::path::Path::new("/Users/raheel/Downloads/org-roam-export");
+    let mut options = fs_extra::dir::CopyOptions::new();
+    options.overwrite = true;
+    fs_extra::dir::copy(from, to, &options)?;
+    Ok(())
+}
+
+fn copy_assets() -> Result<(), fs_extra::error::Error> {
+    let from = std::path::Path::new("/Users/raheel/orgs/roam/css");
     let to = std::path::Path::new("/Users/raheel/Downloads/org-roam-export");
     let mut options = fs_extra::dir::CopyOptions::new();
     options.overwrite = true;
