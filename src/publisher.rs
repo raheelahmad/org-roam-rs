@@ -44,6 +44,7 @@ fn publish_all_pages(wiki: &reader::Wiki) -> Result<(), std::io::Error> {
     let template = templates::all_pages_template();
     let mut context = tera::Context::new();
     context.insert("pages", &wiki.files);
+    context.insert("title", "All Pages");
     let render_result = template.render("all_pages.html", &context).unwrap();
     let content_bytes = render_result.into_bytes();
     let path = base_path() + "all_pages.html";
@@ -58,6 +59,7 @@ fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
     let mut context = tera::Context::new();
     context.insert("tag_name", &tag.name);
     context.insert("pages", &tag.files);
+    context.insert("title", &tag.name);
     let render_result = tempalte.render("tag.html", &context).unwrap();
     let content_bytes = render_result.into_bytes();
     let mut output = tag.output_file()?;
@@ -82,6 +84,7 @@ fn publish_file(file: &reader::OrgFile, wiki: &reader::Wiki) -> Result<(), Expor
     let mut context = tera::Context::new();
     context.insert("page", &parsed_str);
     context.insert("tags", &file.tags);
+    context.insert("title", &file.title);
     let result = template.render("page.html", &context);
     let path = base_path() + &file.title + ".html";
     let mut output = std::fs::File::create(path).unwrap();

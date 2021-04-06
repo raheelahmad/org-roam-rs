@@ -4,7 +4,11 @@ pub fn header() -> String {
     String::from(
         "
 <html>
-<head> <meta charset='utf-8'/> </head>
+<head>
+ <title>
+{{title}}
+ </title>
+ <meta charset='utf-8'/> </head>
 <body>
 	",
     )
