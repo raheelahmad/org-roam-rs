@@ -9,7 +9,7 @@ pub fn header() -> String {
 {{title}}
  </title>
  <meta charset='utf-8'/> </head>
-<link href=\"css/tufte.css\" rel=\"stylesheet\" type=\"text/css\"/>
+<link href=\"css/sakura.css\" rel=\"stylesheet\" type=\"text/css\"/>
 <body>
 <h3>
 <a href='/all_pages.html'> All Pages </a>
@@ -91,7 +91,7 @@ pub fn page_template() -> Tera {
         "page.html",
         &template_with_content(
             "
-<h1><strong>{{title}}</strong></h1>
+<h1 class=\"pagename\"><strong>{{title}}</strong></h1>
 <h3>
 	{% for tag in tags %}
     <a href='tag-{{tag }}.html'>{{ tag }}</a>

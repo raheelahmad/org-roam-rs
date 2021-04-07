@@ -1,7 +1,7 @@
 use errors::ExportError;
 use orgize::Org;
 use reader::OrgTag;
-use std::io::prelude::*;
+use std::{fs::create_dir_all, io::prelude::*, path::Path};
 
 use super::errors;
 use super::handler;
@@ -21,6 +21,10 @@ impl OrgTag {
 }
 
 pub fn publish(wiki: reader::Wiki) -> Result<(), ExportError> {
+    if !Path::new(&base_path()).exists() {
+        create_dir_all(base_path()).expect("Should create export directory if it doesn't exist");
+    }
+
     wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
     publish_all_pages(&wiki)?;
     wiki.files
