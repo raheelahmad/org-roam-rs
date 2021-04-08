@@ -1,11 +1,11 @@
 use super::errors;
-use super::reader;
+use super::orgtag::OrgFile;
 use orgize::export::HtmlHandler;
 use std::io::prelude::*;
 
 pub struct CustomHtmlHandler {
     base: orgize::export::DefaultHtmlHandler,
-    files: Vec<reader::OrgFile>,
+    files: Vec<OrgFile>,
 }
 
 impl Default for CustomHtmlHandler {
@@ -17,7 +17,7 @@ impl Default for CustomHtmlHandler {
     }
 }
 impl CustomHtmlHandler {
-    pub fn new(files: Vec<reader::OrgFile>) -> CustomHtmlHandler {
+    pub fn new(files: Vec<OrgFile>) -> CustomHtmlHandler {
         CustomHtmlHandler {
             base: orgize::export::DefaultHtmlHandler::default(),
             files,

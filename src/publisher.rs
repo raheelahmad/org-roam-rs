@@ -1,28 +1,28 @@
 use errors::ExportError;
 use orgize::Org;
-use reader::OrgTag;
 use std::{fs::create_dir_all, io::prelude::*, path::Path};
 
 use super::errors;
 use super::handler;
-use super::reader;
+use super::orgtag::{OrgFile, OrgTag, Wiki};
 use super::templates;
 
-fn base_path() -> String {
-    String::from("/Users/raheel/Downloads/org-roam-export/")
-}
+fn test_org_backlinks(wiki: &Wiki) {
+    let matched = wiki.files.iter().find(|&f| f.title == "Metal");
+    if let Some(org_file) = matched {
+        println!("{}", org_file.title);
 
-impl OrgTag {
-    fn output_file(self: &OrgTag) -> Result<std::fs::File, std::io::Error> {
-        let path = base_path() + "tag-" + &self.name + ".html";
-        let file = std::fs::File::create(path)?;
-        Ok(file)
+        let path = &org_file.path;
+        let opened_file = std::fs::read_to_string(path).expect("Should read file");
+        let parsed = Org::parse(&opened_file);
     }
 }
 
-pub fn publish(wiki: reader::Wiki) -> Result<(), ExportError> {
-    if !Path::new(&base_path()).exists() {
-        create_dir_all(base_path()).expect("Should create export directory if it doesn't exist");
+pub fn publish(wiki: Wiki) -> Result<(), ExportError> {
+    test_org_backlinks(&wiki);
+    let base_path = Wiki::base_path();
+    if !Path::new(&base_path).exists() {
+        create_dir_all(base_path).expect("Should create export directory if it doesn't exist");
     }
 
     wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
@@ -54,21 +54,21 @@ fn copy_assets() -> Result<(), fs_extra::error::Error> {
     Ok(())
 }
 
-fn publish_all_pages(wiki: &reader::Wiki) -> Result<(), std::io::Error> {
+fn publish_all_pages(wiki: &Wiki) -> Result<(), std::io::Error> {
     let template = templates::all_pages_template();
     let mut context = tera::Context::new();
     context.insert("pages", &wiki.files);
     context.insert("title", "All Pages");
     let render_result = template.render("all_pages.html", &context).unwrap();
     let content_bytes = render_result.into_bytes();
-    let path = base_path() + "all_pages.html";
+    let path = Wiki::base_path() + "all_pages.html";
     let mut output = std::fs::File::create(path).unwrap();
     output.write_all(&content_bytes)?;
 
     Ok(())
 }
 
-fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
+fn publish_tag(tag: &OrgTag) -> Result<(), std::io::Error> {
     let tempalte = templates::tag_page_template();
     let mut context = tera::Context::new();
     context.insert("tag_name", &tag.name);
@@ -82,7 +82,7 @@ fn publish_tag(tag: &reader::OrgTag) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn publish_file(file: &reader::OrgFile, wiki: &reader::Wiki) -> Result<(), ExportError> {
+fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), ExportError> {
     let path = &file.path;
     let opened_file = std::fs::read_to_string(path).expect("Should read file");
     let parsed = Org::parse(&opened_file);
@@ -100,7 +100,7 @@ fn publish_file(file: &reader::OrgFile, wiki: &reader::Wiki) -> Result<(), Expor
     context.insert("tags", &file.tags);
     context.insert("title", &file.title);
     let result = template.render("page.html", &context);
-    let path = base_path() + &file.title + ".html";
+    let path = Wiki::base_path() + &file.title + ".html";
     let mut output = std::fs::File::create(path).unwrap();
     let content_bytes = result.unwrap().into_bytes();
     output.write_all(&content_bytes)?;
