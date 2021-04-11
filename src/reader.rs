@@ -56,6 +56,7 @@ fn read_tags(mut files: Vec<OrgFile>) -> Result<Wiki> {
 fn read_files() -> Result<Vec<OrgFile>> {
     let conn = Connection::open("/Users/raheel/.emacs.d/org-roam.db")?;
     let mut stmt = conn.prepare("SELECT t1.title, f1.file, f1.hash, f1.meta FROM titles t1, files f1 where t1.file == f1.file")?;
+
     let files_iter = stmt.query_map(NO_PARAMS, |row| {
         Ok(OrgFile::new(
             row.get(0)?,

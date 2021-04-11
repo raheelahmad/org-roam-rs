@@ -6,7 +6,9 @@ pub struct OrgFile {
     pub path: String,
     hash: String,
     pub tags: Vec<String>,
+    pub raw_file: String,
     raw_meta: String,
+    pub referenced_file_paths: Vec<String>,
 }
 
 impl OrgFile {
@@ -27,12 +29,19 @@ impl OrgFile {
         let mut title: String = title;
         // remove the double quotes from start/end
         title = String::from(&title[1..title.len() - 1]);
+
+        let err_str = format!("Should read {}", path);
+        let raw_file = std::fs::read_to_string(&path).expect(&err_str);
+
+        let referenced_file_paths = OrgFile::referenced_file_paths(&path);
         OrgFile {
             title,
             path,
             hash,
+            raw_file,
             tags,
             raw_meta,
+            referenced_file_paths,
         }
     }
 }
@@ -71,5 +80,32 @@ impl OrgTag {
         let path = Wiki::base_path() + "tag-" + &self.name + ".html";
         let file = std::fs::File::create(path)?;
         Ok(file)
+    }
+}
+
+fn is_orgfile_path(file: &str) -> bool {
+    file.starts_with("file:") && file.ends_with(".org")
+}
+
+impl OrgFile {
+    fn referenced_file_paths(file: &str) -> Vec<String> {
+        let opened_file = std::fs::read_to_string(file).expect("Should read file");
+        let org = orgize::Org::parse(&opened_file);
+        // let mut printed_header = false;
+        let mut paths = vec![];
+        for p in org.iter() {
+            if let orgize::Event::Start(element) = p {
+                if let orgize::Element::Link(link) = element {
+                    if is_orgfile_path(&link.path) {
+                        // if !printed_header {
+                        //     println!("\n\nFor {}", file);
+                        //     printed_header = true;
+                        // }
+                        paths.push(link.path.strip_prefix("file:").unwrap().to_string());
+                    }
+                }
+            }
+        }
+        paths
     }
 }

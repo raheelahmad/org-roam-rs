@@ -92,11 +92,23 @@ pub fn page_template() -> Tera {
         &template_with_content(
             "
 <h1 class=\"pagename\"><strong>{{title}}</strong></h1>
-<h3>
+   <small>
+   <div>
+    Tags: 
 	{% for tag in tags %}
     <a href='tag-{{tag }}.html'>{{ tag }}</a>
 	{% endfor %}
-</h3>
+   </div>
+
+
+   <div>
+    Backlinks: 
+	{% for file in backlinks %}
+    <a href='{{file.title}}.html'>{{ file.title }}</a> •
+	{% endfor %}
+   </div>
+   </small>
+
 	<div>{{page}}</div>
 ",
         ),

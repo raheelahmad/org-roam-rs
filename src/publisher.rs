@@ -7,19 +7,7 @@ use super::handler;
 use super::orgtag::{OrgFile, OrgTag, Wiki};
 use super::templates;
 
-fn test_org_backlinks(wiki: &Wiki) {
-    let matched = wiki.files.iter().find(|&f| f.title == "Metal");
-    if let Some(org_file) = matched {
-        println!("{}", org_file.title);
-
-        let path = &org_file.path;
-        let opened_file = std::fs::read_to_string(path).expect("Should read file");
-        let parsed = Org::parse(&opened_file);
-    }
-}
-
 pub fn publish(wiki: Wiki) -> Result<(), ExportError> {
-    test_org_backlinks(&wiki);
     let base_path = Wiki::base_path();
     if !Path::new(&base_path).exists() {
         create_dir_all(base_path).expect("Should create export directory if it doesn't exist");
@@ -83,9 +71,7 @@ fn publish_tag(tag: &OrgTag) -> Result<(), std::io::Error> {
 }
 
 fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), ExportError> {
-    let path = &file.path;
-    let opened_file = std::fs::read_to_string(path).expect("Should read file");
-    let parsed = Org::parse(&opened_file);
+    let parsed = Org::parse(&file.raw_file);
     let mut writer = Vec::new();
 
     let files = wiki.files.clone();
@@ -95,10 +81,18 @@ fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), ExportError> {
 
     let template = templates::page_template();
 
+    let org_path = file.path.split('/').last().unwrap();
+    let referring_files: Vec<&OrgFile> = wiki
+        .files
+        .iter()
+        .filter(|f| f.referenced_file_paths.contains(&org_path.to_string()))
+        .collect();
+
     let mut context = tera::Context::new();
     context.insert("page", &parsed_str);
     context.insert("tags", &file.tags);
     context.insert("title", &file.title);
+    context.insert("backlinks", &referring_files);
     let result = template.render("page.html", &context);
     let path = Wiki::base_path() + &file.title + ".html";
     let mut output = std::fs::File::create(path).unwrap();
