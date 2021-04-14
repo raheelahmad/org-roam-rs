@@ -74,6 +74,10 @@ fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), ExportError> {
     let parsed = Org::parse(&file.raw_file);
     let mut writer = Vec::new();
 
+    // we clone here because:
+    // if we try to have CustomHtmlHandler take a ref to files,
+    // it breaks down when implementing `default` requirement, where we can't
+    // pass a ref out when consutructing the struct
     let files = wiki.files.clone();
     let mut handler = handler::CustomHtmlHandler::new(files);
     parsed.write_html_custom(&mut writer, &mut handler)?;
