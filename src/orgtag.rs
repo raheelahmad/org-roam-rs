@@ -94,15 +94,9 @@ impl OrgFile {
         // let mut printed_header = false;
         let mut paths = vec![];
         for p in org.iter() {
-            if let orgize::Event::Start(element) = p {
-                if let orgize::Element::Link(link) = element {
-                    if is_orgfile_path(&link.path) {
-                        // if !printed_header {
-                        //     println!("\n\nFor {}", file);
-                        //     printed_header = true;
-                        // }
-                        paths.push(link.path.strip_prefix("file:").unwrap().to_string());
-                    }
+            if let orgize::Event::Start(orgize::Element::Link(link)) = p {
+                if is_orgfile_path(&link.path) {
+                    paths.push(link.path.strip_prefix("file:").unwrap().to_string());
                 }
             }
         }

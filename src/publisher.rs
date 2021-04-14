@@ -76,7 +76,7 @@ fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), ExportError> {
 
     let files = wiki.files.clone();
     let mut handler = handler::CustomHtmlHandler::new(files);
-    parsed.write_html_custom(&mut writer, &mut handler).unwrap();
+    parsed.write_html_custom(&mut writer, &mut handler)?;
     let parsed_str = String::from_utf8(writer).unwrap();
 
     let template = templates::page_template();

@@ -3,8 +3,7 @@ use rusqlite::{Connection, Result};
 
 use super::orgtag::{OrgFile, OrgTag, OrgTagFile, Wiki};
 
-fn read_tags(mut files: Vec<OrgFile>) -> Result<Wiki> {
-    let conn = Connection::open("/Users/raheel/.emacs.d/org-roam.db")?;
+fn read_tags(mut files: Vec<OrgFile>, conn: &Connection) -> Result<Wiki> {
     let mut stmt = conn.prepare("SELECT file, tags from tags WHERE file IS NOT NULL;")?;
 
     let mut tags: Vec<OrgTag> = vec![];
@@ -53,8 +52,7 @@ fn read_tags(mut files: Vec<OrgFile>) -> Result<Wiki> {
     Ok(Wiki { files, tags })
 }
 
-fn read_files() -> Result<Vec<OrgFile>> {
-    let conn = Connection::open("/Users/raheel/.emacs.d/org-roam.db")?;
+fn read_files(conn: &Connection) -> Result<Vec<OrgFile>> {
     let mut stmt = conn.prepare("SELECT t1.title, f1.file, f1.hash, f1.meta FROM titles t1, files f1 where t1.file == f1.file")?;
 
     let files_iter = stmt.query_map(NO_PARAMS, |row| {
@@ -71,7 +69,7 @@ fn read_files() -> Result<Vec<OrgFile>> {
     for file in files_iter {
         match file {
             Ok(f) => files.push(f),
-            Err(e) => println!("{}", e),
+            Err(e) => println!("Error reading file: {}", e),
         }
     }
     files.sort_by_key(|f| f.elapsed());
@@ -96,7 +94,8 @@ impl Elapsed for OrgFile {
 }
 
 pub fn read_wiki() -> Result<Wiki> {
-    let files = read_files()?;
-    let wiki = read_tags(files)?;
+    let conn = Connection::open("/Users/raheel/.emacs.d/org-roam.db")?;
+    let files = read_files(&conn)?;
+    let wiki = read_tags(files, &conn)?;
     Ok(wiki)
 }
