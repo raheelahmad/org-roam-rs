@@ -55,31 +55,23 @@ fn read_tags(mut files: Vec<OrgFile>, conn: &Connection) -> Result<Wiki> {
 fn read_files(conn: &Connection) -> Result<Vec<OrgFile>> {
     let mut stmt = conn.prepare("SELECT t1.title, f1.file, f1.hash, f1.meta FROM titles t1, files f1 where t1.file == f1.file")?;
 
-    let files_iter = stmt.query_map(NO_PARAMS, |row| {
-        Ok(OrgFile::new(
-            row.get(0)?,
-            row.get(1)?,
-            row.get(2)?,
-            vec![],
-            row.get(3)?,
-        ))
-    })?;
-
-    let mut files: Vec<OrgFile> = vec![];
-    for file in files_iter {
-        match file {
-            Ok(f) => files.push(f),
-            Err(e) => println!("Error reading file: {}", e),
-        }
-    }
-    let mut result = files
-        .into_iter()
+    let mut files = stmt
+        .query_map(NO_PARAMS, |row| {
+            Ok(OrgFile::new(
+                row.get(0)?,
+                row.get(1)?,
+                row.get(2)?,
+                vec![],
+                row.get(3)?,
+            ))
+        })?
+        .filter_map(|f| f.ok())
         .filter(|f| f.title != "Recent changes")
         .collect::<Vec<OrgFile>>();
 
-    result.sort_by_key(|f| f.elapsed());
+    files.sort_by_key(|f| f.elapsed());
 
-    Ok(result)
+    Ok(files)
 }
 
 trait Elapsed {
