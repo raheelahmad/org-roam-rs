@@ -72,9 +72,14 @@ fn read_files(conn: &Connection) -> Result<Vec<OrgFile>> {
             Err(e) => println!("Error reading file: {}", e),
         }
     }
-    files.sort_by_key(|f| f.elapsed());
+    let mut result = files
+        .into_iter()
+        .filter(|f| f.title != "Recent changes")
+        .collect::<Vec<OrgFile>>();
 
-    Ok(files)
+    result.sort_by_key(|f| f.elapsed());
+
+    Ok(result)
 }
 
 trait Elapsed {

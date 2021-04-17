@@ -52,8 +52,6 @@ All pages for <strong>{{tag_name}}</strong>
 {% endfor %}
 </ul>
 </div>
-
-</body></html>
 ",
     );
 
@@ -91,21 +89,26 @@ pub fn page_template() -> Tera {
         "page.html",
         &template_with_content(
             "
+<hr/>
 <h1 class=\"pagename\"><strong>{{title}}</strong></h1>
    <small>
    <div>
+    {% if tags %}
     Tags: 
 	{% for tag in tags %}
     <a href='tag-{{tag }}.html'>{{ tag }}</a>
 	{% endfor %}
+    {% endif %}
    </div>
 
 
    <div>
+    {% if backlinks %}
     Backlinks: 
 	{% for file in backlinks %}
     <a href='{{file.title}}.html'>{{ file.title }}</a> •
 	{% endfor %}
+	{% endif %}
    </div>
    </small>
 

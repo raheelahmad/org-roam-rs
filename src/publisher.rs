@@ -94,9 +94,13 @@ fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), ExportError> {
 
     let mut context = tera::Context::new();
     context.insert("page", &parsed_str);
-    context.insert("tags", &file.tags);
+    if !file.tags.is_empty() {
+        context.insert("tags", &file.tags);
+    }
     context.insert("title", &file.title);
-    context.insert("backlinks", &referring_files);
+    if !referring_files.is_empty() {
+        context.insert("backlinks", &referring_files);
+    }
     let result = template.render("page.html", &context);
     let path = Wiki::base_path() + &file.title + ".html";
     let mut output = std::fs::File::create(path).unwrap();
