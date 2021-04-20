@@ -69,10 +69,25 @@ pub fn all_pages_template() -> Tera {
             "
 <h1>All Pages</h1>
 <ul>
-{% for page in pages %}
-<li>
-  <a href='{{page.title}}.html'>{{page.title}}</a>
-</li>
+{% for files_by_week in pages %}
+
+	{% if files_by_week.weeks_away == 0 %}
+		<h3>
+		This week
+		</h3>
+	{% else %}
+		<h3>
+		{{ files_by_week.weeks_away }} weeks away
+		</h3>
+	{% endif %}
+
+
+	{% for page in files_by_week.files %}
+		<li>
+		<a href='{{page.title}}.html'>{{page.title}}</a>
+		</li>
+	{% endfor %}
+
 {% endfor %}
 </ul>
 ",

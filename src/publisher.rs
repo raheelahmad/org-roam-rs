@@ -4,7 +4,7 @@ use std::{fs::create_dir_all, io::prelude::*, path::Path};
 
 use super::errors;
 use super::handler;
-use super::orgtag::{OrgFile, OrgTag, Wiki};
+use super::orgtag::{FilesByWeeksAway, OrgFile, OrgTag, Wiki};
 use super::templates;
 
 pub fn publish(wiki: Wiki) -> Result<(), ExportError> {
@@ -45,7 +45,8 @@ fn copy_assets() -> Result<(), fs_extra::error::Error> {
 fn publish_all_pages(wiki: &Wiki) -> Result<(), std::io::Error> {
     let template = templates::all_pages_template();
     let mut context = tera::Context::new();
-    context.insert("pages", &wiki.files);
+    let files_grouped_by_week = FilesByWeeksAway::build(&wiki);
+    context.insert("pages", &files_grouped_by_week);
     context.insert("title", "All Pages");
     let render_result = template.render("all_pages.html", &context).unwrap();
     let content_bytes = render_result.into_bytes();

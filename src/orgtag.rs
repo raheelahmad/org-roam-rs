@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::time::SystemTime;
+
+use chrono::prelude::*;
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
@@ -9,6 +13,7 @@ pub struct OrgFile {
     pub raw_file: String,
     raw_meta: String,
     pub referenced_file_paths: Vec<String>,
+    modified: SystemTime,
 }
 
 impl OrgFile {
@@ -34,6 +39,7 @@ impl OrgFile {
         let raw_file = std::fs::read_to_string(&path).expect(&err_str);
 
         let referenced_file_paths = OrgFile::referenced_file_paths(&path);
+        let modified = OrgFile::last_modified_date(&path);
         OrgFile {
             title,
             path,
@@ -42,7 +48,17 @@ impl OrgFile {
             tags,
             raw_meta,
             referenced_file_paths,
+            modified,
         }
+    }
+}
+
+impl OrgFile {
+    pub fn modified_days_ago(self: &OrgFile) -> i32 {
+        let chrono_modified = chrono::DateTime::<Utc>::from(self.modified);
+        let chrono_now = Utc::now();
+
+        chrono_now.num_days_from_ce() - chrono_modified.num_days_from_ce()
     }
 }
 
@@ -101,5 +117,39 @@ impl OrgFile {
             }
         }
         paths
+    }
+
+    fn last_modified_date(file: &str) -> SystemTime {
+        let file = std::fs::metadata(file).expect("should read file metadata");
+        file.modified().unwrap()
+    }
+}
+
+#[derive(Serialize)]
+pub struct FilesByWeeksAway {
+    pub files: Vec<OrgFile>,
+    pub weeks_away: i32,
+}
+
+impl FilesByWeeksAway {
+    pub fn build(wiki: &Wiki) -> Vec<FilesByWeeksAway> {
+        let mut hash: HashMap<i32, Vec<OrgFile>> = HashMap::new();
+        for file in &wiki.files {
+            let days_ago = file.modified_days_ago();
+            if let Some(files) = hash.get_mut(&days_ago) {
+                files.push(file.clone());
+            } else {
+                hash.insert(days_ago, vec![file.clone()]);
+            }
+        }
+        let mut result: Vec<FilesByWeeksAway> = vec![];
+        for (key, value) in hash {
+            result.push(FilesByWeeksAway {
+                files: value,
+                weeks_away: key - 1, // start at 0
+            });
+        }
+        result.sort_by(|a, b| a.weeks_away.partial_cmp(&b.weeks_away).unwrap());
+        result
     }
 }
