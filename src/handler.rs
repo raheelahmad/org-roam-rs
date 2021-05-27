@@ -39,7 +39,7 @@ impl HtmlHandler<errors::ExportError> for CustomHtmlHandler {
                     .or_else(|| path.strip_prefix("file:/images/"))
                     .unwrap();
 
-                write!(w, "<img src='/images/{}'/>", filename).unwrap();
+                write!(w, "<img src='images/{}'/>", filename).unwrap();
             } else if link.path.ends_with("org") && !link.path.starts_with("http") {
                 // Need to switch out an org fle link with the published file URL
                 let link_path = link.path.strip_prefix("file:").unwrap();

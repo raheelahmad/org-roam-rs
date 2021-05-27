@@ -87,7 +87,7 @@ pub struct Wiki {
 
 impl Wiki {
     pub fn base_path() -> String {
-        String::from("/Users/raheel/Downloads/org-roam-export/")
+        String::from("/Users/raheel/Projects/etc/rust/roamserver/org-roam-export/")
     }
 }
 
@@ -122,6 +122,35 @@ impl OrgFile {
     fn last_modified_date(file: &str) -> SystemTime {
         let file = std::fs::metadata(file).expect("should read file metadata");
         file.modified().unwrap()
+    }
+}
+
+#[derive(Serialize)]
+pub struct FilesForTag {
+    pub tag_name: String,
+    pub files: Vec<OrgFile>,
+}
+
+impl FilesForTag {
+    pub fn build(wiki: &Wiki) -> Vec<FilesForTag> {
+        let mut hash: HashMap<String, Vec<OrgFile>> = HashMap::new();
+        for file in &wiki.files {
+            for tag in &file.tags {
+                if let Some(files) = hash.get_mut(tag) {
+                    files.push(file.clone());
+                } else {
+                    hash.insert(tag.clone(), vec![file.clone()]);
+                }
+            }
+        }
+        let mut result: Vec<FilesForTag> = vec![];
+        for (tag_name, files_for_tag) in hash {
+            result.push(FilesForTag {
+                tag_name,
+                files: files_for_tag,
+            });
+        }
+        result
     }
 }
 

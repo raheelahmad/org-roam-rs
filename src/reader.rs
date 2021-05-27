@@ -2,17 +2,16 @@ use rusqlite::{params, NO_PARAMS};
 use rusqlite::{Connection, Result};
 
 use super::orgtag::{OrgFile, OrgTag, OrgTagFile, Wiki};
+#[derive(Debug)]
+struct TagResult {
+    path: String,
+    tags: Vec<String>,
+}
 
 fn read_tags(mut files: Vec<OrgFile>, conn: &Connection) -> Result<Wiki> {
     let mut stmt = conn.prepare("SELECT file, tags from tags WHERE file IS NOT NULL;")?;
 
     let mut tags: Vec<OrgTag> = vec![];
-
-    #[derive(Debug)]
-    struct TagResult {
-        path: String,
-        tags: Vec<String>,
-    }
 
     let tag_results = stmt.query_map(params![], |row| {
         let mut path: String = row.get(0)?;

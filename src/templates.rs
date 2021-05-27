@@ -12,7 +12,8 @@ pub fn header() -> String {
 <link href=\"css/sakura.css\" rel=\"stylesheet\" type=\"text/css\"/>
 <body>
 <h3>
-<a href='/all_pages.html'> All Pages </a>
+<a href='all_pages.html'> All Pages </a>
+<a href='all_tags.html'> All Tags </a>
 </h3>
 </small>
 	",
@@ -60,6 +61,37 @@ All pages for <strong>{{tag_name}}</strong>
     tera
 }
 
+pub fn all_tags_template() -> Tera {
+    let mut tera = Tera::default();
+    tera.autoescape_on(vec![]);
+    tera.add_raw_template(
+        "all_tags.html",
+        &template_with_content(
+            "
+<h1>All Tags</h1>
+<ul>
+{% for files_for_tag in tag_files %}
+
+	<h3>
+	{{ files_for_tag.tag_name }}
+	</h3>
+
+
+	{% for page in files_for_tag.files %}
+		<li>
+		<a href='{{page.title}}.html'>{{page.title}}</a>
+		</li>
+	{% endfor %}
+
+{% endfor %}
+</ul>
+",
+        ),
+    )
+    .expect("should load raw templat");
+    tera
+}
+
 pub fn all_pages_template() -> Tera {
     let mut tera = Tera::default();
     tera.autoescape_on(vec![]);
@@ -77,7 +109,7 @@ pub fn all_pages_template() -> Tera {
 		</h3>
 	{% else %}
 		<h3>
-		{{ files_by_week.weeks_away }} weeks away
+		{{ files_by_week.weeks_away + 1 }} weeks away
 		</h3>
 	{% endif %}
 

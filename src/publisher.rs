@@ -2,6 +2,8 @@ use errors::ExportError;
 use orgize::Org;
 use std::{fs::create_dir_all, io::prelude::*, path::Path};
 
+use crate::orgtag;
+
 use super::errors;
 use super::handler;
 use super::orgtag::{FilesByWeeksAway, OrgFile, OrgTag, Wiki};
@@ -14,7 +16,8 @@ pub fn publish(wiki: Wiki) -> Result<(), ExportError> {
     }
 
     wiki.tags.iter().try_for_each(|tag| publish_tag(tag))?;
-    publish_all_pages(&wiki)?;
+    publish_all_pages_file(&wiki)?;
+    publish_all_tags_file(&wiki)?;
     wiki.files
         .iter()
         .try_for_each(|file| publish_file(file, &wiki))?;
@@ -26,7 +29,7 @@ pub fn publish(wiki: Wiki) -> Result<(), ExportError> {
 
 fn copy_images() -> Result<(), fs_extra::error::Error> {
     let from = std::path::Path::new("/Users/raheel/orgs/roam/images");
-    let to = std::path::Path::new("/Users/raheel/Downloads/org-roam-export");
+    let to = std::path::Path::new(&(Wiki::base_path())).to_owned();
     let mut options = fs_extra::dir::CopyOptions::new();
     options.overwrite = true;
     fs_extra::dir::copy(from, to, &options)?;
@@ -35,14 +38,29 @@ fn copy_images() -> Result<(), fs_extra::error::Error> {
 
 fn copy_assets() -> Result<(), fs_extra::error::Error> {
     let from = std::path::Path::new("/Users/raheel/orgs/roam/css");
-    let to = std::path::Path::new("/Users/raheel/Downloads/org-roam-export");
+    let to = std::path::Path::new(&(Wiki::base_path())).to_owned();
     let mut options = fs_extra::dir::CopyOptions::new();
     options.overwrite = true;
     fs_extra::dir::copy(from, to, &options)?;
     Ok(())
 }
 
-fn publish_all_pages(wiki: &Wiki) -> Result<(), std::io::Error> {
+fn publish_all_tags_file(wiki: &Wiki) -> Result<(), std::io::Error> {
+    let tag_files = orgtag::FilesForTag::build(&wiki);
+
+    let template = templates::all_tags_template();
+    let mut context = tera::Context::new();
+    context.insert("tag_files", &tag_files);
+    context.insert("title", "All Tags");
+    let render_result = template.render("all_tags.html", &context).unwrap();
+    let content_bytes = render_result.into_bytes();
+    let path = Wiki::base_path() + "all_tags.html";
+    let mut output = std::fs::File::create(path).unwrap();
+    output.write_all(&content_bytes)?;
+    Ok(())
+}
+
+fn publish_all_pages_file(wiki: &Wiki) -> Result<(), std::io::Error> {
     let template = templates::all_pages_template();
     let mut context = tera::Context::new();
     let files_grouped_by_week = FilesByWeeksAway::build(&wiki);
