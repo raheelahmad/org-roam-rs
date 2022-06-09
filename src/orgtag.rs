@@ -8,10 +8,9 @@ use serde::Serialize;
 pub struct OrgFile {
     pub title: String,
     pub path: String,
-    hash: String,
+    pub id: String,
     pub tags: Vec<String>,
     pub raw_file: String,
-    raw_meta: String,
     pub referenced_file_paths: Vec<String>,
     modified: SystemTime,
 }
@@ -21,19 +20,16 @@ impl OrgFile {
         self.tags.push(String::from(tag));
     }
 
-    pub fn new(
-        title: String,
-        path: String,
-        hash: String,
-        tags: Vec<String>,
-        raw_meta: String,
-    ) -> OrgFile {
+    pub fn new(title: String, path: String, id: String, tags: Vec<String>) -> OrgFile {
         let mut path: String = path;
         // remove the double quotes from start/end
         path = String::from(&path[1..path.len() - 1]);
         let mut title: String = title;
         // remove the double quotes from start/end
         title = String::from(&title[1..title.len() - 1]);
+        // remove the double quotes from start/end
+        let mut id: String = id;
+        id = String::from(&id[1..id.len() - 1]);
 
         let err_str = format!("Should read {}", path);
         let raw_file = std::fs::read_to_string(&path).expect(&err_str);
@@ -43,10 +39,9 @@ impl OrgFile {
         OrgFile {
             title,
             path,
-            hash,
+            id,
             raw_file,
             tags,
-            raw_meta,
             referenced_file_paths,
             modified,
         }
@@ -62,19 +57,14 @@ impl OrgFile {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct OrgTagFile {
-    pub title: String,
-}
-
 #[derive(Debug)]
 pub struct OrgTag {
     pub name: String,
-    pub files: Vec<OrgTagFile>,
+    pub files: Vec<String>,
 }
 
 impl OrgTag {
-    pub fn add_path(self: &mut OrgTag, p: OrgTagFile) {
+    pub fn add_path(self: &mut OrgTag, p: String) {
         self.files.push(p);
     }
 }

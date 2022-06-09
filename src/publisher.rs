@@ -1,4 +1,4 @@
-use errors::ExportError;
+use errors::Error;
 use orgize::Org;
 use std::{fs::create_dir_all, io::prelude::*, path::Path};
 
@@ -9,7 +9,7 @@ use super::handler;
 use super::orgtag::{FilesByWeeksAway, OrgFile, OrgTag, Wiki};
 use super::templates;
 
-pub fn publish(wiki: Wiki) -> Result<(), ExportError> {
+pub fn publish(wiki: Wiki) -> Result<(), Error> {
     let base_path = Wiki::base_path();
     if !Path::new(&base_path).exists() {
         create_dir_all(base_path).expect("Should create export directory if it doesn't exist");
@@ -89,7 +89,7 @@ fn publish_tag(tag: &OrgTag) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), ExportError> {
+fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), Error> {
     let parsed = Org::parse(&file.raw_file);
     let mut writer = Vec::new();
 

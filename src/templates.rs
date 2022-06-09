@@ -48,7 +48,7 @@ All pages for <strong>{{tag_name}}</strong>
 <ul>
 {% for page in pages %}
 <li>
-  <a href='{{page.title}}.html'>{{page.title}}</a>
+  <a href='{{page}}.html'>{{page}}</a>
 </li>
 {% endfor %}
 </ul>

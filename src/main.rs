@@ -4,10 +4,9 @@ mod orgtag;
 mod publisher;
 mod reader;
 mod templates;
-// use serde_lexpr::{from_str, to_string};
 
-fn main() -> Result<(), errors::ExportError> {
-    let wiki = reader::read_wiki().unwrap();
+fn main() -> Result<(), errors::Error> {
+    let wiki = reader::read_wiki()?;
     publisher::publish(wiki)?;
     Ok(())
 }

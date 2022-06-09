@@ -1,23 +1,30 @@
 #[derive(Debug)]
-pub enum ExportError {
-    Random(String),
+pub enum Error {
+    FileAccess(String),
+    DBAccess(String),
 }
 
-impl std::fmt::Display for ExportError {
+impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExportError::Random(reason) => write!(f, "{}", (reason)),
+            Error::FileAccess(reason) => write!(f, "{}", (reason)),
+            Error::DBAccess(reason) => write!(f, "{}", (reason)),
         }
     }
 }
 
-impl From<fs_extra::error::Error> for ExportError {
+impl From<fs_extra::error::Error> for Error {
     fn from(error: fs_extra::error::Error) -> Self {
-        ExportError::Random(error.to_string())
+        Error::FileAccess(error.to_string())
     }
 }
-impl From<std::io::Error> for ExportError {
+impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
-        ExportError::Random(error.to_string())
+        Error::FileAccess(error.to_string())
+    }
+}
+impl From<rusqlite::Error> for Error {
+    fn from(error: rusqlite::Error) -> Self {
+        Error::DBAccess(error.to_string())
     }
 }

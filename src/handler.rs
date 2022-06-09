@@ -25,14 +25,14 @@ impl CustomHtmlHandler {
     }
 }
 
-impl HtmlHandler<errors::ExportError> for CustomHtmlHandler {
+impl HtmlHandler<errors::Error> for CustomHtmlHandler {
     fn start<W: Write>(
         &mut self,
         mut w: W,
         element: &orgize::Element,
-    ) -> Result<(), errors::ExportError> {
+    ) -> Result<(), errors::Error> {
         if let orgize::Element::Link(link) = element {
-            if link.path.ends_with("png") {
+            if link.path.ends_with("png") && !link.path.starts_with("http") {
                 let path = &link.path;
                 let filename = path
                     .strip_prefix("file:images/")
@@ -40,19 +40,12 @@ impl HtmlHandler<errors::ExportError> for CustomHtmlHandler {
                     .unwrap();
 
                 write!(w, "<img src='images/{}'/>", filename).unwrap();
-            } else if link.path.ends_with("org") && !link.path.starts_with("http") {
+            } else if link.path.starts_with("id:") {
                 // Need to switch out an org fle link with the published file URL
-                let link_path = link.path.strip_prefix("file:").unwrap();
-                let matching_file = self
-                    .files
-                    .iter()
-                    .filter(|f| {
-                        let file_path_comp = f.path.split('/').last().unwrap();
-                        file_path_comp == link_path
-                    })
-                    .last();
+                let link_id = link.path.strip_prefix("id:").unwrap();
+                let matching_file = self.files.iter().filter(|f| f.id == link_id).last();
                 if let Some(a_match) = matching_file {
-                    write!(w, "<a href='{}'>{}</a>", a_match.title, a_match.title).unwrap();
+                    write!(w, "<a href='{}.html'>{}</a>", a_match.title, a_match.title).unwrap();
                 } else {
                     self.base.start(w, element)?;
                 }
@@ -65,11 +58,7 @@ impl HtmlHandler<errors::ExportError> for CustomHtmlHandler {
         Ok(())
     }
 
-    fn end<W: Write>(
-        &mut self,
-        w: W,
-        element: &orgize::Element,
-    ) -> Result<(), errors::ExportError> {
+    fn end<W: Write>(&mut self, w: W, element: &orgize::Element) -> Result<(), errors::Error> {
         self.base.end(w, element)?;
         Ok(())
     }
