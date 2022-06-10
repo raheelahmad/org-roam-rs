@@ -3,10 +3,6 @@ use rusqlite::{Connection, Result};
 
 use super::orgtag::{OrgFile, OrgTag, Wiki};
 
-fn trim_start_end_char(string: &str) -> String {
-    String::from(&string[1..string.len() - 1])
-}
-
 fn read_tags(mut files: Vec<OrgFile>, conn: &Connection) -> Result<Wiki> {
     let mut stmt = conn.prepare(
         "SELECT n.file, t.tag from tags t, nodes n WHERE n.file IS NOT NULL AND n.id = t.node_id;",
@@ -20,7 +16,7 @@ fn read_tags(mut files: Vec<OrgFile>, conn: &Connection) -> Result<Wiki> {
     }
     let tag_results = stmt.query_map(params![], |row| {
         let mut path: String = row.get(0)?;
-        path = trim_start_end_char(&path);
+        path = crate::helpers::trim_start_end_char(&path);
 
         Ok(TagRow {
             path,

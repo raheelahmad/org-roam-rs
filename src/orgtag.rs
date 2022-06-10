@@ -4,6 +4,8 @@ use std::time::SystemTime;
 use chrono::prelude::*;
 use serde::Serialize;
 
+use crate::helpers;
+
 #[derive(Debug, Serialize, Clone)]
 pub struct OrgFile {
     pub title: String,
@@ -21,15 +23,9 @@ impl OrgFile {
     }
 
     pub fn new(title: String, path: String, id: String, tags: Vec<String>) -> OrgFile {
-        let mut path: String = path;
-        // remove the double quotes from start/end
-        path = String::from(&path[1..path.len() - 1]);
-        let mut title: String = title;
-        // remove the double quotes from start/end
-        title = String::from(&title[1..title.len() - 1]);
-        // remove the double quotes from start/end
-        let mut id: String = id;
-        id = String::from(&id[1..id.len() - 1]);
+        let path = helpers::trim_start_end_char(&path);
+        let title = helpers::trim_start_end_char(&title);
+        let id = helpers::trim_start_end_char(&id);
 
         let err_str = format!("Should read {}", path);
         let raw_file = std::fs::read_to_string(&path).expect(&err_str);
