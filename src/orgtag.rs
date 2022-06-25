@@ -72,8 +72,13 @@ pub struct Wiki {
 }
 
 impl Wiki {
+    // TODO: rename to base_export_path
     pub fn base_path() -> String {
         String::from("/Users/raheel/Projects/etc/rust/roamserver/org-roam-export/")
+    }
+
+    pub fn base_org_roam_path() -> String {
+        String::from("/Users/raheel/orgs/roam")
     }
 }
 

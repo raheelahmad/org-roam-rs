@@ -1,3 +1,5 @@
+use crate::orgtag::Wiki;
+
 use super::errors;
 use super::orgtag::OrgFile;
 use orgize::export::HtmlHandler;
@@ -39,7 +41,14 @@ impl HtmlHandler<errors::Error> for CustomHtmlHandler {
                     .or_else(|| path.strip_prefix("file:/images/"))
                     .unwrap();
 
-                write!(w, "<img src='images/{}'/>", filename).unwrap();
+                let width_prefix = image_tag_width_suffix(filename);
+
+                write!(
+                    w,
+                    "<a href='images/{}'> <img src='images/{}' {}/> </a>",
+                    filename, filename, width_prefix
+                )
+                .unwrap();
             } else if link.path.starts_with("id:") {
                 // Need to switch out an org fle link with the published file URL
                 let link_id = link.path.strip_prefix("id:").unwrap();
@@ -62,4 +71,21 @@ impl HtmlHandler<errors::Error> for CustomHtmlHandler {
         self.base.end(w, element)?;
         Ok(())
     }
+}
+
+fn image_tag_width_suffix(filename: &str) -> String {
+    let filename_for_size = format!("{}/images/{}", Wiki::base_org_roam_path(), filename);
+    let size = imagesize::size(&filename_for_size);
+
+    let prefix = match size {
+        Ok(size) => {
+            if size.width > 600 {
+                "width='600'"
+            } else {
+                ""
+            }
+        }
+        Err(_) => "",
+    };
+    prefix.to_string()
 }

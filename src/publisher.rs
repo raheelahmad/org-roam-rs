@@ -28,6 +28,7 @@ pub fn publish(wiki: Wiki) -> Result<(), Error> {
 }
 
 fn copy_images() -> Result<(), fs_extra::error::Error> {
+    // TODO: should use Wiki::base_org_roam_path()
     let from = std::path::Path::new("/Users/raheel/orgs/roam/images");
     let to = std::path::Path::new(&(Wiki::base_path())).to_owned();
     let mut options = fs_extra::dir::CopyOptions::new();
@@ -37,6 +38,7 @@ fn copy_images() -> Result<(), fs_extra::error::Error> {
 }
 
 fn copy_assets() -> Result<(), fs_extra::error::Error> {
+    // TODO: should use Wiki::base_org_roam_path()
     let from = std::path::Path::new("/Users/raheel/orgs/roam/css");
     let to = std::path::Path::new(&(Wiki::base_path())).to_owned();
     let mut options = fs_extra::dir::CopyOptions::new();

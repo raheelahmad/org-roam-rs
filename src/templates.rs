@@ -9,12 +9,17 @@ pub fn header() -> String {
 {{title}}
  </title>
  <meta charset='utf-8'/> </head>
-<link rel='stylesheet' href='https://unpkg.com/@picocss/pico@latest/css/pico.min.css'>
+<link rel='stylesheet' href='css/lit.css'>
 <body>
-<main class='container'>
-<header>
-<a href='all_pages.html'> All Pages </a> • <a href='all_tags.html'> All Tags </a>
-</header>
+<div class='c'>
+<div class='row card'>
+<div class='2 col'>
+<a href='all_pages.html'> All Pages </a>
+</div>
+<div class='2 col'>
+<a href='all_tags.html'> All Tags </a>
+</div>
+</div>
 </small>
 	",
     )
@@ -23,7 +28,7 @@ pub fn header() -> String {
 pub fn footer() -> String {
     String::from(
         "
-    </main>
+    </div>
 	</body></html>
     ",
     )

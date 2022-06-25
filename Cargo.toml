@@ -14,3 +14,4 @@ tera = "1"
 serde = { version = "1.0", features = ["derive"] }
 fs_extra = "1.2.0"
 chrono = "0.4.6"
+imagesize = "0.9"
