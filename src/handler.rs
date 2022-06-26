@@ -33,7 +33,13 @@ impl HtmlHandler<errors::Error> for CustomHtmlHandler {
         mut w: W,
         element: &orgize::Element,
     ) -> Result<(), errors::Error> {
-        if let orgize::Element::Link(link) = element {
+        if let orgize::Element::Text { value: text } = element {
+            if text.starts_with(":ID:") {
+                write!(w, "ids").unwrap();
+            } else {
+                self.base.start(w, element)?;
+            }
+        } else if let orgize::Element::Link(link) = element {
             if link.path.ends_with("png") && !link.path.starts_with("http") {
                 let path = &link.path;
                 let filename = path
@@ -64,6 +70,7 @@ impl HtmlHandler<errors::Error> for CustomHtmlHandler {
         } else {
             self.base.start(w, element)?;
         }
+
         Ok(())
     }
 
