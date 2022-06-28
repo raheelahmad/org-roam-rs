@@ -3,6 +3,7 @@ use orgize::Org;
 use std::{fs::create_dir_all, io::prelude::*, path::Path};
 
 use crate::orgtag;
+use crate::orgtag::FilesSorted;
 
 use super::errors;
 use super::handler;
@@ -65,7 +66,7 @@ fn publish_all_tags_file(wiki: &Wiki) -> Result<(), std::io::Error> {
 fn publish_all_pages_file(wiki: &Wiki) -> Result<(), std::io::Error> {
     let template = templates::all_pages_template();
     let mut context = tera::Context::new();
-    let files_grouped_by_week = FilesByWeeksAway::build(&wiki);
+    let files_grouped_by_week = FilesSorted::build(&wiki);
     context.insert("pages", &files_grouped_by_week);
     context.insert("title", "All Pages");
     let render_result = template.render("all_pages.html", &context).unwrap();

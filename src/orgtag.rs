@@ -127,7 +127,8 @@ impl FilesForTag {
         let mut hash: HashMap<String, Vec<OrgFile>> = HashMap::new();
         for file in &wiki.files {
             for tag in &file.tags {
-                if let Some(files) = hash.get_mut(tag) {
+                let tag = helpers::trim_start_end_char(tag);
+                if let Some(files) = hash.get_mut(&tag) {
                     files.push(file.clone());
                 } else {
                     hash.insert(tag.clone(), vec![file.clone()]);
@@ -142,6 +143,23 @@ impl FilesForTag {
             });
         }
         result
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct FilesSorted {
+    pub files: Vec<OrgFile>
+}
+
+impl FilesSorted {
+    pub fn build(wiki: &Wiki) -> FilesSorted {
+        let mut files = wiki.files.clone();
+        files
+            .sort_by(|a, b| a.modified_days_ago().partial_cmp(&b.modified_days_ago()).unwrap());
+
+        FilesSorted {
+            files
+        }
     }
 }
 
