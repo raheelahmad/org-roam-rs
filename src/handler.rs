@@ -35,7 +35,7 @@ impl HtmlHandler<errors::Error> for CustomHtmlHandler {
     ) -> Result<(), errors::Error> {
         if let orgize::Element::Text { value: text } = element {
             if text.starts_with(":ID:") {
-                write!(w, "ids").unwrap();
+                // DO nothing
             } else {
                 self.base.start(w, element)?;
             }
