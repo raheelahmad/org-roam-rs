@@ -4,7 +4,7 @@ use std::time::SystemTime;
 use chrono::prelude::*;
 use serde::Serialize;
 
-use crate::helpers;
+use crate::helpers::{self, trim_start_end_char};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct OrgFile {
@@ -19,7 +19,7 @@ pub struct OrgFile {
 
 impl OrgFile {
     pub fn add_tag(self: &mut OrgFile, tag: &str) {
-        self.tags.push(String::from(tag));
+        self.tags.push(tag.to_string());
     }
 
     pub fn new(title: String, path: String, id: String, tags: Vec<String>) -> OrgFile {
@@ -127,8 +127,7 @@ impl FilesForTag {
         let mut hash: HashMap<String, Vec<OrgFile>> = HashMap::new();
         for file in &wiki.files {
             for tag in &file.tags {
-                let tag = helpers::trim_start_end_char(tag);
-                if let Some(files) = hash.get_mut(&tag) {
+                if let Some(files) = hash.get_mut(tag) {
                     files.push(file.clone());
                 } else {
                     hash.insert(tag.clone(), vec![file.clone()]);
@@ -148,18 +147,19 @@ impl FilesForTag {
 
 #[derive(Debug, Serialize)]
 pub struct FilesSorted {
-    pub files: Vec<OrgFile>
+    pub files: Vec<OrgFile>,
 }
 
 impl FilesSorted {
     pub fn build(wiki: &Wiki) -> FilesSorted {
         let mut files = wiki.files.clone();
-        files
-            .sort_by(|a, b| a.modified_days_ago().partial_cmp(&b.modified_days_ago()).unwrap());
+        files.sort_by(|a, b| {
+            a.modified_days_ago()
+                .partial_cmp(&b.modified_days_ago())
+                .unwrap()
+        });
 
-        FilesSorted {
-            files
-        }
+        FilesSorted { files }
     }
 }
 

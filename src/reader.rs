@@ -16,12 +16,11 @@ fn read_tags(mut files: Vec<OrgFile>, conn: &Connection) -> Result<Wiki> {
     }
     let tag_results = stmt.query_map(params![], |row| {
         let mut path: String = row.get(0)?;
+        let mut name: String = row.get(1)?;
+        name = crate::helpers::trim_start_end_char(&name);
         path = crate::helpers::trim_start_end_char(&path);
 
-        Ok(TagRow {
-            path,
-            tag: row.get(1)?,
-        })
+        Ok(TagRow { path, tag: name })
     })?;
 
     // add tags to each file
@@ -41,7 +40,7 @@ fn read_tags(mut files: Vec<OrgFile>, conn: &Connection) -> Result<Wiki> {
             tag.add_path(tag_file);
         } else {
             tags.push(OrgTag {
-                name: String::from(result.tag),
+                name: result.tag,
                 files: vec![tag_file],
             });
         }

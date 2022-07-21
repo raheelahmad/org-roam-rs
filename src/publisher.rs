@@ -79,6 +79,7 @@ fn publish_all_pages_file(wiki: &Wiki) -> Result<(), std::io::Error> {
 }
 
 fn publish_tag(tag: &OrgTag) -> Result<(), std::io::Error> {
+    println!("{}", tag.name);
     let tempalte = templates::tag_page_template();
     let mut context = tera::Context::new();
     context.insert("tag_name", &tag.name);
