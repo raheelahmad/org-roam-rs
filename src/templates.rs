@@ -129,6 +129,7 @@ pub fn page_template() -> Tera {
             "
 <hr/>
 <h1 class=\"pagename\"><strong>{{title}}</strong></h1>
+  <hr/>
    <small>
    <div>
     {% if tags %}

@@ -72,9 +72,8 @@ pub struct Wiki {
 }
 
 impl Wiki {
-    // TODO: rename to base_export_path
-    pub fn base_path() -> String {
-        String::from("/Users/raheel/Projects/etc/rust/roamserver/org-roam-export/")
+    pub fn base_export_path() -> String {
+        String::from("/Users/raheel/Projects/served/wiki/")
     }
 
     pub fn base_org_roam_path() -> String {
@@ -84,7 +83,7 @@ impl Wiki {
 
 impl OrgTag {
     pub fn output_file(self: &OrgTag) -> Result<std::fs::File, std::io::Error> {
-        let path = Wiki::base_path() + "tag-" + &self.name + ".html";
+        let path = Wiki::base_export_path() + "tag-" + &self.name + ".html";
         let file = std::fs::File::create(path)?;
         Ok(file)
     }

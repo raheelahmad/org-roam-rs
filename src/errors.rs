@@ -2,6 +2,7 @@
 pub enum Error {
     FileAccess(String),
     DBAccess(String),
+    NotifyError(String),
 }
 
 impl std::error::Error for Error {}
@@ -11,7 +12,14 @@ impl std::fmt::Display for Error {
         match self {
             Error::FileAccess(reason) => write!(f, "{}", (reason)),
             Error::DBAccess(reason) => write!(f, "{}", (reason)),
+            Error::NotifyError(reason) => write!(f, "Error with notify: {}", reason),
         }
+    }
+}
+
+impl From<notify::Error> for Error {
+    fn from(error: notify::Error) -> Self {
+        Error::NotifyError(error.to_string())
     }
 }
 

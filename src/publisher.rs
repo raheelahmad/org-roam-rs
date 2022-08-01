@@ -7,11 +7,11 @@ use crate::orgtag::FilesSorted;
 
 use super::errors;
 use super::handler;
-use super::orgtag::{FilesByWeeksAway, OrgFile, OrgTag, Wiki};
+use super::orgtag::{OrgFile, OrgTag, Wiki};
 use super::templates;
 
 pub fn publish(wiki: Wiki) -> Result<(), Error> {
-    let base_path = Wiki::base_path();
+    let base_path = Wiki::base_export_path();
     if !Path::new(&base_path).exists() {
         create_dir_all(base_path).expect("Should create export directory if it doesn't exist");
     }
@@ -31,7 +31,7 @@ pub fn publish(wiki: Wiki) -> Result<(), Error> {
 fn copy_images() -> Result<(), fs_extra::error::Error> {
     // TODO: should use Wiki::base_org_roam_path()
     let from = std::path::Path::new("/Users/raheel/orgs/roam/images");
-    let to = std::path::Path::new(&(Wiki::base_path())).to_owned();
+    let to = std::path::Path::new(&(Wiki::base_export_path())).to_owned();
     let mut options = fs_extra::dir::CopyOptions::new();
     options.overwrite = true;
     fs_extra::dir::copy(from, to, &options)?;
@@ -41,7 +41,7 @@ fn copy_images() -> Result<(), fs_extra::error::Error> {
 fn copy_assets() -> Result<(), fs_extra::error::Error> {
     // TODO: should use Wiki::base_org_roam_path()
     let from = std::path::Path::new("/Users/raheel/orgs/roam/css");
-    let to = std::path::Path::new(&(Wiki::base_path())).to_owned();
+    let to = std::path::Path::new(&(Wiki::base_export_path())).to_owned();
     let mut options = fs_extra::dir::CopyOptions::new();
     options.overwrite = true;
     fs_extra::dir::copy(from, to, &options)?;
@@ -57,7 +57,7 @@ fn publish_all_tags_file(wiki: &Wiki) -> Result<(), std::io::Error> {
     context.insert("title", "All Tags");
     let render_result = template.render("all_tags.html", &context).unwrap();
     let content_bytes = render_result.into_bytes();
-    let path = Wiki::base_path() + "all_tags.html";
+    let path = Wiki::base_export_path() + "all_tags.html";
     let mut output = std::fs::File::create(path).unwrap();
     output.write_all(&content_bytes)?;
     Ok(())
@@ -71,7 +71,7 @@ fn publish_all_pages_file(wiki: &Wiki) -> Result<(), std::io::Error> {
     context.insert("title", "All Pages");
     let render_result = template.render("all_pages.html", &context).unwrap();
     let content_bytes = render_result.into_bytes();
-    let path = Wiki::base_path() + "all_pages.html";
+    let path = Wiki::base_export_path() + "all_pages.html";
     let mut output = std::fs::File::create(path).unwrap();
     output.write_all(&content_bytes)?;
 
@@ -125,7 +125,7 @@ fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), Error> {
         context.insert("backlinks", &referring_files);
     }
     let result = template.render("page.html", &context);
-    let path = Wiki::base_path() + &file.title + ".html";
+    let path = Wiki::base_export_path() + &file.title + ".html";
     let mut output = std::fs::File::create(path).unwrap();
     let content_bytes = result.unwrap().into_bytes();
     output.write_all(&content_bytes)?;
