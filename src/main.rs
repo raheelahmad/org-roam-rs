@@ -8,6 +8,7 @@ mod templates;
 use std::path::Path;
 
 use notify::Watcher;
+use std::sync::mpsc;
 
 fn publish_wiki() {
     if let Ok(wiki) = reader::read_wiki() {
@@ -39,15 +40,18 @@ fn result_handler(res: notify::Result<notify::Event>) {
 }
 
 fn main() -> Result<(), errors::Error> {
-    let mut watcher = notify::recommended_watcher(result_handler)?;
+    let (tx, rx) = mpsc::channel();
+    let mut watcher = notify::RecommendedWatcher::new(tx)?;
 
-    // let watcher = notify::watcher(std::time::Duration::from_secs(8)).unwrap();
-    // notify::watcher(, delay)
     watcher.watch(
         Path::new("/Users/raheel/orgs/roam"),
         notify::RecursiveMode::Recursive,
     )?;
+
     publish_wiki();
-    loop {}
+
+    for e in rx {
+        result_handler(e);
+    }
     Ok(())
 }
