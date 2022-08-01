@@ -11,7 +11,7 @@ use notify::Watcher;
 
 fn publish_wiki() {
     if let Ok(wiki) = reader::read_wiki() {
-        publisher::publish(wiki);
+        publisher::publish(wiki).unwrap();
     }
 }
 

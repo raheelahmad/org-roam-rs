@@ -4,7 +4,7 @@ use std::time::SystemTime;
 use chrono::prelude::*;
 use serde::Serialize;
 
-use crate::helpers::{self, trim_start_end_char};
+use crate::helpers;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct OrgFile {
@@ -166,27 +166,4 @@ impl FilesSorted {
 pub struct FilesByWeeksAway {
     pub files: Vec<OrgFile>,
     pub weeks_away: i32,
-}
-
-impl FilesByWeeksAway {
-    pub fn build(wiki: &Wiki) -> Vec<FilesByWeeksAway> {
-        let mut hash: HashMap<i32, Vec<OrgFile>> = HashMap::new();
-        for file in &wiki.files {
-            let days_ago = file.modified_days_ago();
-            if let Some(files) = hash.get_mut(&days_ago) {
-                files.push(file.clone());
-            } else {
-                hash.insert(days_ago, vec![file.clone()]);
-            }
-        }
-        let mut result: Vec<FilesByWeeksAway> = vec![];
-        for (key, value) in hash {
-            result.push(FilesByWeeksAway {
-                files: value,
-                weeks_away: key - 1, // start at 0
-            });
-        }
-        result.sort_by(|a, b| a.weeks_away.partial_cmp(&b.weeks_away).unwrap());
-        result
-    }
 }

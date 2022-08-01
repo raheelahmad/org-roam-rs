@@ -27,20 +27,28 @@ impl CustomHtmlHandler {
     }
 }
 
+fn is_local_image_path(path: &str) -> bool {
+    let is_image = path.ends_with("jpg") || path.ends_with("png");
+    let is_not_remote = !path.starts_with("http");
+    return is_image && is_not_remote;
+}
+
 impl HtmlHandler<errors::Error> for CustomHtmlHandler {
     fn start<W: Write>(
         &mut self,
         mut w: W,
         element: &orgize::Element,
     ) -> Result<(), errors::Error> {
-        if let orgize::Element::Text { value: text } = element {
+        if let orgize::Element::Title(title) = element {
+            write!(w, "<h{}>", title.level + 1).unwrap();
+        } else if let orgize::Element::Text { value: text } = element {
             if text.starts_with(":ID:") {
                 // DO nothing
             } else {
                 self.base.start(w, element)?;
             }
         } else if let orgize::Element::Link(link) = element {
-            if link.path.ends_with("png") && !link.path.starts_with("http") {
+            if is_local_image_path(&link.path) {
                 let path = &link.path;
                 let filename = path
                     .strip_prefix("file:images/")
