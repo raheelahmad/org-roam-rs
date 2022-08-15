@@ -143,9 +143,9 @@ pub fn page_template() -> Tera {
 
    <div>
     {% if backlinks %}
-    Backlinks: 
+    What links here: 
 	{% for file in backlinks %}
-    <a href='{{file.title}}.html'>{{ file.title }}</a> •
+    <a href='{{file.title}}.html' style='margin:10px'>{{ file.title }}</a> 
 	{% endfor %}
 	{% endif %}
    </div>

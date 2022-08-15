@@ -90,7 +90,7 @@ impl OrgTag {
 }
 
 fn is_orgfile_path(file: &str) -> bool {
-    file.starts_with("file:") && file.ends_with(".org")
+    file.starts_with("id:")
 }
 
 impl OrgFile {
@@ -102,7 +102,7 @@ impl OrgFile {
         for p in org.iter() {
             if let orgize::Event::Start(orgize::Element::Link(link)) = p {
                 if is_orgfile_path(&link.path) {
-                    paths.push(link.path.strip_prefix("file:").unwrap().to_string());
+                    paths.push(link.path.strip_prefix("id:").unwrap().to_string());
                 }
             }
         }

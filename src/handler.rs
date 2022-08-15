@@ -42,7 +42,7 @@ impl HtmlHandler<errors::Error> for CustomHtmlHandler {
         if let orgize::Element::Title(title) = element {
             write!(w, "<h{}>", title.level + 1).unwrap();
         } else if let orgize::Element::Text { value: text } = element {
-            if text.starts_with(":ID:") {
+            if text.starts_with(":ID:") || text.starts_with("tags :: ") {
                 // DO nothing
             } else {
                 self.base.start(w, element)?;

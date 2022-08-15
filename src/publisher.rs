@@ -108,18 +108,14 @@ fn publish_file(file: &OrgFile, wiki: &Wiki) -> Result<(), Error> {
 
     let template = templates::page_template();
 
-    let org_path = file.path.split('/').last().unwrap();
     let referring_files: Vec<&OrgFile> = wiki
         .files
         .iter()
-        .filter(|f| f.referenced_file_paths.contains(&org_path.to_string()))
+        .filter(|f| f.referenced_file_paths.contains(&file.id))
         .collect();
 
     let mut context = tera::Context::new();
     context.insert("page", &parsed_str);
-    if !file.tags.is_empty() {
-        context.insert("tags", &file.tags);
-    }
     context.insert("title", &file.title);
     if !referring_files.is_empty() {
         context.insert("backlinks", &referring_files);
