@@ -29,7 +29,7 @@ impl CustomHtmlHandler {
 
 fn is_local_image_path(path: &str) -> bool {
     let is_image = path.ends_with("jpg") || path.ends_with("png");
-    let is_not_remote = !path.starts_with("http");
+    let is_not_remote = path.starts_with("file:");
     return is_image && is_not_remote;
 }
 
